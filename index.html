@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Our New Orleans Wedding · Feb 20, 2027</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      background: #f5efe6;
+    }
+
+    #map {
+      width: 100%;
+      height: 100vh;
+      min-height: 500px;
+    }
+
+    /* ── Legend ─────────────────────────────────────────────── */
+    #legend {
+      position: absolute;
+      bottom: 28px;
+      left: 14px;
+      z-index: 1000;
+      background: rgba(255, 252, 247, 0.96);
+      border-radius: 10px;
+      padding: 14px 16px;
+      border: 0.5px solid #cfc0a4;
+      min-width: 210px;
+      box-shadow: 0 3px 14px rgba(0,0,0,0.13);
+    }
+
+    #legend h2 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #3d2b1a;
+      margin-bottom: 10px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 11.5px;
+      color: #5a4535;
+      margin-bottom: 6px;
+    }
+
+    .legend-dot {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.8);
+      flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .legend-line {
+      width: 20px;
+      height: 3px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .legend-line.dashed {
+      background: none;
+      border-top: 3px dashed #2563a8;
+    }
+
+    .legend-divider {
+      border: none;
+      border-top: 0.5px solid #d4c9b0;
+      margin: 8px 0;
+    }
+
+    /* ── Info panel ──────────────────────────────────────────── */
+    #info-panel {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      z-index: 1000;
+      background: rgba(255, 252, 247, 0.97);
+      border-radius: 10px;
+      padding: 16px 18px;
+      border: 0.5px solid #cfc0a4;
+      max-width: 230px;
+      box-shadow: 0 3px 14px rgba(0,0,0,0.14);
+      display: none;
+    }
+
+    #info-panel .info-emoji { font-size: 22px; margin-bottom: 4px; }
+    #info-panel .info-title { font-size: 15px; font-weight: 700; color: #3d2b1a; margin-bottom: 2px; }
+    #info-panel .info-sub   { font-size: 12px; color: #9a7c5e; margin-bottom: 8px; }
+    #info-panel .info-body  { font-size: 12px; color: #5a4535; line-height: 1.55; }
+    #info-panel .info-close {
+      margin-top: 10px;
+      font-size: 11px;
+      color: #9a8878;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      font-family: Georgia, serif;
+    }
+
+    /* ── Street label overlays ───────────────────────────────── */
+    .street-label {
+      background: none;
+      border: none;
+      font-family: Georgia, serif;
+      font-size: 10px;
+      font-style: italic;
+      color: #8b6e52;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+      pointer-events: none;
+      text-shadow: 0 0 3px rgba(255,252,247,0.9), 0 0 6px rgba(255,252,247,0.7);
+    }
+
+    /* ── Attribution tweak ───────────────────────────────────── */
+    .leaflet-control-attribution {
+      font-size: 9px;
+      background: rgba(255,252,247,0.8) !important;
+    }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<!-- Legend -->
+<div id="legend">
+  <h2>February 20, 2027</h2>
+
+  <div class="legend-item">
+    <span class="legend-dot" style="background:#7b4fa6;"></span>
+    Welcome Party · Dat Dog Frenchmen
+  </div>
+  <div class="legend-item">
+    <span class="legend-dot" style="background:#b5272b;"></span>
+    Ceremony · St. Mary's Church
+  </div>
+  <div class="legend-item">
+    <span class="legend-dot" style="background:#d4830a;"></span>
+    Reception · Latrobe's on Royal
+  </div>
+  <div class="legend-item">
+    <span class="legend-dot" style="background:#1a6e2e;"></span>
+    Afterparty · Pat O'Brien's
+  </div>
+
+  <hr class="legend-divider" />
+
+  <div class="legend-item">
+    <span class="legend-line" style="background:#c86d1a;"></span>
+    Walk from ceremony (~12 min)
+  </div>
+  <div class="legend-item">
+    <span class="legend-line dashed"></span>
+    Second-line to Pat's 🎺
+  </div>
+
+  <hr class="legend-divider" />
+
+  <div class="legend-item">
+    <span style="font-size:13px;">⭐</span>
+    Points of interest
+  </div>
+</div>
+
+<!-- Info panel -->
+<div id="info-panel">
+  <div class="info-emoji" id="info-emoji"></div>
+  <div class="info-title" id="info-title"></div>
+  <div class="info-sub"   id="info-sub"></div>
+  <div class="info-body"  id="info-body"></div>
+  <button class="info-close" onclick="closeInfo()">✕ close</button>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+
+// ── Map init ──────────────────────────────────────────────────────────────────
+
+const map = L.map('map', {
+  center: [29.9592, -90.0638],
+  zoom: 16,
+  zoomControl: true,
+});
+
+// Stamen Watercolor tiles (served via Stadia CDN, no auth required for this endpoint)
+L.tileLayer('https://tiles.stamen.com/watercolor/{z}/{x}/{y}.jpg', {
+  attribution:
+    'Map tiles by <a href="https://stamen.com">Stamen Design</a>, ' +
+    'under <a href="https://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. ' +
+    'Data &copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors.',
+  maxZoom: 18,
+  minZoom: 13,
+}).addTo(map);
+
+// Toner labels on top for street names
+L.tileLayer('https://tiles.stamen.com/toner-labels/{z}/{x}/{y}.png', {
+  attribution: '',
+  maxZoom: 18,
+  minZoom: 13,
+  opacity: 0.45,
+}).addTo(map);
+
+
+// ── Marker helpers ────────────────────────────────────────────────────────────
+
+/**
+ * Creates a teardrop pin icon.
+ * @param {string} color    - hex fill color
+ * @param {string} label    - emoji or text label inside the pin
+ * @param {number} [size=34] - diameter of the pin head
+ */
+function makePin(color, label, size = 34) {
+  return L.divIcon({
+    className: '',
+    iconSize:   [size, size + 10],
+    iconAnchor: [size / 2, size + 10],
+    html: `
+      <div style="position:relative;text-align:center;width:${size}px;">
+        <div style="
+          width:${size}px; height:${size}px;
+          background:${color};
+          border-radius:50% 50% 50% 0;
+          transform:rotate(-45deg);
+          border:2.5px solid rgba(255,255,255,0.85);
+          box-shadow:0 2px 7px rgba(0,0,0,0.28);
+        "></div>
+        <div style="
+          position:absolute;
+          top:${size * 0.11}px; left:0; right:0;
+          font-size:${size * 0.38}px;
+          line-height:${size * 0.78}px;
+        ">${label}</div>
+      </div>`,
+  });
+}
+
+/**
+ * Small POI medallion icon.
+ * @param {string} emoji
+ */
+function makePOI(emoji) {
+  return L.divIcon({
+    className: '',
+    iconSize:   [24, 24],
+    iconAnchor: [12, 12],
+    html: `
+      <div style="
+        width:24px; height:24px;
+        background:#f5e8c8;
+        border-radius:50%;
+        border:1.5px solid #b49050;
+        display:flex; align-items:center; justify-content:center;
+        font-size:12px;
+        box-shadow:0 1px 4px rgba(0,0,0,0.18);
+      ">${emoji}</div>`,
+  });
+}
+
+
+// ── Info panel ────────────────────────────────────────────────────────────────
+
+function showInfo(emoji, title, sub, body) {
+  document.getElementById('info-emoji').textContent = emoji;
+  document.getElementById('info-title').textContent = title;
+  document.getElementById('info-sub').textContent   = sub;
+  document.getElementById('info-body').innerHTML    = body;
+  document.getElementById('info-panel').style.display = 'block';
+}
+
+function closeInfo() {
+  document.getElementById('info-panel').style.display = 'none';
+}
+
+
+// ── Venue data ────────────────────────────────────────────────────────────────
+
+const VENUES = [
+  {
+    lat: 29.963605, lng: -90.057680,
+    color: '#7b4fa6', pin: '🎉', size: 34,
+    emoji: '🌭',
+    title: 'Dat Dog on Frenchmen',
+    sub:   'Welcome Party · Feb 19 evening',
+    body:  'Kick off the weekend with the crew on the Frenchmen Street music corridor. Known for gourmet dogs and a true NOLA neighborhood vibe.',
+  },
+  {
+    lat: 29.960860, lng: -90.060663,
+    color: '#b5272b', pin: '💒', size: 40,
+    emoji: '⛪',
+    title: "St. Mary's Church",
+    sub:   'Ceremony · Old Ursuline Museum',
+    body:  'The oldest building in the Mississippi Valley — a grand, sacred setting for the ceremony.<br><br><em style="color:#9a7c5e;">~12 min walk south to the reception →</em>',
+  },
+  {
+    lat: 29.955765, lng: -90.066819,
+    color: '#d4830a', pin: '🥂', size: 40,
+    emoji: '🏛️',
+    title: "Latrobe's on Royal",
+    sub:   'Reception · 403 Royal St',
+    body:  'A stunning historic bank vault turned event space. Exposed brick, exceptional food, and all the New Orleans charm you could want.',
+  },
+  {
+    lat: 29.958200, lng: -90.065297,
+    color: '#1a6e2e', pin: '🎺', size: 36,
+    emoji: '🎶',
+    title: "Pat O'Brien's",
+    sub:   'Afterparty · 718 St Peter St',
+    body:  "The legendary home of the Hurricane. We'll second-line here straight from Latrobe's — follow the brass band!",
+  },
+];
+
+VENUES.forEach(v => {
+  const marker = L.marker([v.lat, v.lng], { icon: makePin(v.color, v.pin, v.size) }).addTo(map);
+  marker.on('click', () => showInfo(v.emoji, v.title, v.sub, v.body));
+});
+
+
+// ── Points of interest ────────────────────────────────────────────────────────
+
+const POIS = [
+  { lat: 29.957402, lng: -90.062949, emoji: '🏛', name: 'Jackson Square',  sub: 'Landmark' },
+  { lat: 29.957604, lng: -90.061768, emoji: '☕', name: 'Café du Monde',   sub: 'Beignets & café au lait' },
+];
+
+POIS.forEach(p => {
+  const marker = L.marker([p.lat, p.lng], { icon: makePOI(p.emoji) }).addTo(map);
+  marker.on('click', () => showInfo(p.emoji, p.name, p.sub, ''));
+});
+
+
+// ── Street label overlays ─────────────────────────────────────────────────────
+// These supplement the toner label layer with styled, angled labels for key streets.
+
+const STREET_LABELS = [
+  { lat: 29.9595, lng: -90.0680, text: 'Royal St',   rotate: -8  },
+  { lat: 29.9590, lng: -90.0655, text: 'Bourbon St', rotate: -8  },
+  { lat: 29.9582, lng: -90.0628, text: 'Decatur St', rotate: -8  },
+];
+
+STREET_LABELS.forEach(s => {
+  L.marker([s.lat, s.lng], {
+    icon: L.divIcon({
+      className: 'street-label',
+      html: `<span style="transform:rotate(${s.rotate}deg);display:inline-block;">${s.text}</span>`,
+      iconSize:   [90, 16],
+      iconAnchor: [45, 8],
+    }),
+    interactive: false,
+    zIndexOffset: -100,
+  }).addTo(map);
+});
+
+
+// ── Routes ────────────────────────────────────────────────────────────────────
+
+// Walk: St. Mary's → Latrobe's  (~12 min on foot)
+// Route: south on Chartres, west on Conti, south on Royal
+const WALK_CEREMONY_TO_RECEPTION = [
+  [29.960860, -90.060663],  // St. Mary's
+  [29.960200, -90.060663],  // south on Chartres
+  [29.959000, -90.061500],
+  [29.958000, -90.062500],
+  [29.957000, -90.063800],
+  [29.956200, -90.065000],
+  [29.955765, -90.066819],  // Latrobe's
+];
+
+const walkLine = L.polyline(WALK_CEREMONY_TO_RECEPTION, {
+  color:     '#c86d1a',
+  weight:    3.5,
+  opacity:   0.88,
+  lineCap:   'round',
+  lineJoin:  'round',
+}).addTo(map);
+
+// Mid-route label
+L.marker(WALK_CEREMONY_TO_RECEPTION[3], {
+  icon: L.divIcon({
+    className: '',
+    iconSize:   [100, 20],
+    iconAnchor: [50, 10],
+    html: `<div style="
+      background:rgba(255,252,247,0.92);
+      border:0.5px solid #c86d1a;
+      border-radius:8px;
+      padding:2px 8px;
+      font-family:Georgia,serif;
+      font-size:10px;
+      color:#7a4010;
+      white-space:nowrap;
+    ">~12 min walk</div>`,
+  }),
+  interactive: false,
+  zIndexOffset: 50,
+}).addTo(map);
+
+
+// Second-line parade: Latrobe's → Pat O'Brien's  (north on Royal, east on St Peter)
+const SECOND_LINE = [
+  [29.955765, -90.066819],  // Latrobe's
+  [29.956500, -90.066300],
+  [29.957200, -90.065700],
+  [29.957800, -90.065500],
+  [29.958200, -90.065297],  // Pat O'Brien's
+];
+
+L.polyline(SECOND_LINE, {
+  color:     '#2563a8',
+  weight:    3.5,
+  opacity:   0.85,
+  dashArray: '9 6',
+  lineCap:   'round',
+}).addTo(map);
+
+// Second-line label
+L.marker(SECOND_LINE[2], {
+  icon: L.divIcon({
+    className: '',
+    iconSize:   [96, 20],
+    iconAnchor: [48, 10],
+    html: `<div style="
+      background:rgba(248,251,255,0.92);
+      border:0.5px solid #2563a8;
+      border-radius:8px;
+      padding:2px 8px;
+      font-family:Georgia,serif;
+      font-size:10px;
+      color:#1a3e6e;
+      white-space:nowrap;
+    ">🎺 Second line!</div>`,
+  }),
+  interactive: false,
+  zIndexOffset: 50,
+}).addTo(map);
+
+</script>
+</body>
+</html>
