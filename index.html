@@ -173,6 +173,27 @@
 
 <div id="map"></div>
 
+<!-- Title card -->
+<div id="title-card" style="
+  position:absolute;
+  top:10px;
+  left:54px;
+  z-index:1000;
+  background:rgba(255,252,247,0.96);
+  border-radius:10px;
+  padding:12px 14px;
+  border:0.5px solid #cfc0a4;
+  box-shadow:0 3px 14px rgba(0,0,0,0.13);
+">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+    <div>
+      <div style="font-size:15px;font-weight:700;color:#3d2b1a;letter-spacing:0.02em;">Sarah & Brandon's Wedding</div>
+      <div style="font-size:10px;color:#9a7c5e;margin-top:2px;letter-spacing:0.06em;text-transform:uppercase;">New Orleans · February 2027</div>
+    </div>
+    <button onclick="document.getElementById('title-card').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:11px;color:#9a8878;font-family:Georgia,serif;padding:0;line-height:1;flex-shrink:0;">✕</button>
+  </div>
+</div>
+
 <!-- Legend -->
 <div id="legend">
   <h2>February 19, 2027</h2>
@@ -220,6 +241,10 @@
     <div class="toggle-pill off" id="poi-pill"></div>
     Show points of interest
   </div>
+  <div class="legend-toggle" style="margin-top:6px;" id="parking-toggle" onclick="toggleParking()">
+    <div class="toggle-pill on" id="parking-pill"></div>
+    Show parking recommendations
+  </div>
 </div>
 
 <!-- Info panel -->
@@ -237,7 +262,7 @@
 // ── Map init ──────────────────────────────────────────────────────────────────
 
 const map = L.map('map', {
-  center: [29.9601, -90.0611],
+  center: [29.9591, -90.0621],
   zoom: 16,
   zoomControl: true,
 });
@@ -279,7 +304,7 @@ function makePin(color, emoji, label, r = 22) {
   return L.divIcon({
     className: '',
     iconSize:   [w, h],
-    iconAnchor: [w / 2, h],
+    iconAnchor: [w / 2, cy],
     html: `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <filter id="wc-${label.replace(/\s/g,'')}"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="1.4" xChannelSelector="R" yChannelSelector="G"/></filter>
@@ -308,7 +333,7 @@ function makePOI(emoji, label) {
   return L.divIcon({
     className: '',
     iconSize:   [w, h],
-    iconAnchor: [cx, h / 2],
+    iconAnchor: [cx, 14],
     html: `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
       <ellipse cx="${cx}" cy="14" rx="13" ry="13" fill="#f5e8c8" opacity="0.92" stroke="#b49050" stroke-width="1"/>
       <text x="${cx}" y="19" text-anchor="middle" font-size="13" font-family="serif">${emoji}</text>
@@ -361,8 +386,8 @@ const VENUES = [
     sub:   'Reception · 403 Royal St',
     body:  'Stately 1821 Greek Revival bank building designed by Benjamin Henry Latrobe, now a sought-after event venue with soaring ceilings and original brick vaults.<br><br><a href="https://maps.google.com/?q=Latrobes+on+Royal+403+Royal+St+New+Orleans+LA" target="_blank" rel="noopener" style="color:#d4830a;font-size:11px;text-decoration:none;">View on Google Maps →</a>',
   },
-  {
-    lat: 29.955327596343462, lng: -90.0680691456164,
+  { 
+    lat: 29.9548204002082, lng:-90.06836251401374,
     color: '#2e6fa8', pin: '🏢', label: 'Hotel Mazarin',
     emoji: '🏢',
     title: 'Hotel Mazarin',
@@ -432,6 +457,56 @@ function togglePOIs() {
 }
 
 
+// ── Parking ───────────────────────────────────────────────────────────────────
+
+const PARKING = [
+  { lat: 29.95595473903992, lng: -90.06802925475156,
+    emoji: '🅿️', shortLabel: 'Parking P0149',
+    name: 'Premium Parking P149', sub: 'Closest to Latrobe\'s',
+    desc: 'Covered lot — the closest parking option to Latrobe\'s on Royal. Reserve in advance online.',
+    link: 'https://maps.app.goo.gl/ygPu2cDXb3pdVubp9',
+    linkText: 'View on Google Maps →' },
+  { lat: 29.957747764765408, lng: -90.06148328979478,
+    emoji: '🅿️', shortLabel: 'Parking P0407',
+    name: 'Premium Parking P407', sub: 'Near the French Quarter',
+    desc: 'Convenient lot near the heart of the French Quarter — a good middle-ground option between venues. Reserve in advance online.',
+    link: 'https://www.premiumparking.com/checkout/P407?parking_time_type=reservation&starts=1778360400&ends=1778389200',
+    linkText: 'Reserve on Premium Parking →' },
+  { lat: 29.955761860044404, lng: -90.06819663674855,
+    emoji: '🚗', shortLabel: 'Royal Sonesta Valet',
+    name: 'Royal Sonesta Valet', sub: 'Valet Parking',
+    desc: 'Valet parking at the Royal Sonesta Hotel, conveniently located near the reception.',
+    link: 'https://maps.app.goo.gl/87ryyzLn3RG9YetQ9',
+    linkText: 'View on Google Maps →' },
+];
+
+const parkingMarkers = [];
+
+PARKING.forEach(p => {
+  const icon = L.divIcon({
+    className: '',
+    iconSize:   [30, 30],
+    iconAnchor: [15, 15],
+    html: `<svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="15" cy="15" rx="14" ry="14" fill="#f5e8c8" opacity="0.92" stroke="#b49050" stroke-width="1"/>
+      <text x="15" y="20" text-anchor="middle" font-size="14" font-family="serif">${p.emoji}</text>
+    </svg>`,
+  });
+  const marker = L.marker([p.lat, p.lng], { icon }).addTo(map);
+  const body = `${p.desc}<br><br><a href="${p.link}" target="_blank" rel="noopener" style="color:#2e6fa8;font-size:11px;text-decoration:none;">${p.linkText}</a>`;
+  marker.on('click', () => showInfo(p.emoji, p.name, p.sub, body));
+  parkingMarkers.push(marker);
+});
+
+let parkingVisible = true;
+function toggleParking() {
+  parkingVisible = !parkingVisible;
+  parkingMarkers.forEach(m => parkingVisible ? m.addTo(map) : m.remove());
+  document.getElementById('parking-pill').className = `toggle-pill ${parkingVisible ? 'on' : 'off'}`;
+  if (!parkingVisible) closeInfo();
+}
+
+
 // ── Routes (loaded from routes.json, generated by fetch-routes.mjs) ─────────
 
 function addWalkLabel(latlngs, text, color, textColor, posOverride) {
@@ -489,7 +564,8 @@ fetch('routes.json')
       dashArray: '9 6',
       lineCap:   'round',
     }).addTo(map);
-    addWalkLabel(secondLineRoute, '🎺 Second line!', '#2563a8', '#1a3e6e', [29.957827796830628, -90.06637476058643]);
+    addWalkLabel(secondLineRoute, '🎺 Second line!', '#2563a8', '#1a3e6e', [ 29.957019,
+      -90.067071]);
 
   })
   .catch(err => {
