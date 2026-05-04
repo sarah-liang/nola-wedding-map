@@ -1,0 +1,7 @@
+{
+  "name": "nola-wedding-map",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "npx live-server ."
+  }
+}

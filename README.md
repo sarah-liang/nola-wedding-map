@@ -1,5 +1,16 @@
 # 🎺 NOLA Wedding Map
 
+## Regenerating route data
+
+Run the fetch script to pull fresh coordinates and street-snapped routes from Nominatim/OSRM:
+
+```bash
+node fetch-routes.mjs
+```
+
+This writes `routes.json`, which `index.html` loads at startup.
+
+
 Interactive watercolor map for our New Orleans wedding — **February 20, 2027**.
 
 Built with [Leaflet.js](https://leafletjs.com/) and [Stamen Watercolor tiles](https://stamen.com/open-source/watercolor/).
