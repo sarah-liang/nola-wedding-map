@@ -1,6 +1,7 @@
 {
   "name": "nola-wedding-map",
   "version": "1.0.0",
+  "packageManager": "pnpm@10",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
