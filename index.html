@@ -267,7 +267,7 @@ const map = L.map('map', {
   zoomControl: true,
 });
 
-const STADIA_KEY = '471886bd-71ee-4e1d-8e5b-f8bcce511f12';
+const STADIA_KEY = '%VITE_STADIA_KEY%';
 
 L.tileLayer(`https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg?api_key=${STADIA_KEY}`, {
   attribution:

@@ -2,6 +2,11 @@
   "name": "nola-wedding-map",
   "version": "1.0.0",
   "scripts": {
-    "dev": "npx live-server ."
+    "dev": "vite",
+    "build": "vite build",
+    "fetch-routes": "node --env-file=.env fetch-routes.mjs"
+  },
+  "devDependencies": {
+    "vite": "^8.0.10"
   }
 }

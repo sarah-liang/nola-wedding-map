@@ -8,7 +8,8 @@
 
 import { writeFileSync } from 'fs';
 
-const STADIA_KEY = '471886bd-71ee-4e1d-8e5b-f8bcce511f12';
+const STADIA_KEY = process.env.VITE_STADIA_KEY;
+if (!STADIA_KEY) throw new Error('Missing VITE_STADIA_KEY in .env');
 
 const COORDS = {
   ceremony:   { lat: 29.9610929523623,   lng: -90.06063171678058 }, // St. Mary's Church
@@ -77,5 +78,5 @@ const output = {
   secondLineRoute: secondLine.waypoints,
   secondLineMins:  secondLine.mins,
 };
-writeFileSync('routes.json', JSON.stringify(output, null, 2));
-console.log('\nWrote routes.json ✓');
+writeFileSync('public/routes.json', JSON.stringify(output, null, 2));
+console.log('\nWrote public/routes.json ✓');
