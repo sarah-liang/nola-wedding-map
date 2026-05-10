@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 const LINKS = [
@@ -29,11 +30,18 @@ const LINKS = [
 ]
 
 export default function Home() {
+  const [heroLoaded, setHeroLoaded] = useState(false)
+
   return (
     <div className="home">
       {/* Hero photo */}
       <div className="home-hero">
-        <img src="/hero.jpg" alt="Sarah and Brandon" className="home-hero-img" />
+        <img
+          src="/hero.jpg"
+          alt="Sarah and Brandon"
+          className={`home-hero-img${heroLoaded ? ' home-hero-img--loaded' : ''}`}
+          onLoad={() => setHeroLoaded(true)}
+        />
         <div className="home-hero-fade" />
       </div>
 
