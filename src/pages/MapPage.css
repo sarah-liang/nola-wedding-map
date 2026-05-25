@@ -91,6 +91,68 @@
   min-width: 210px;
 }
 
+/* Mobile toggle button — hidden on desktop */
+.legend-mobile-toggle {
+  display: none;
+}
+
+@media (max-width: 639px) {
+  .legend {
+    bottom: 14px;
+    right: 10px;
+    left: 10px;
+    min-width: 0;
+    padding: 0;
+  }
+
+  .legend-mobile-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 11px 14px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: #3d2b1a;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .legend-chevron-wrap {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .legend-chevron-label {
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #9a7c5e;
+    font-family: Georgia, serif;
+  }
+
+  .legend-chevron {
+    font-size: 10px;
+    color: #9a7c5e;
+  }
+
+  .legend-body {
+    display: none;
+    padding: 0 14px 12px;
+    border-top: 0.5px solid #d4c9b0;
+  }
+
+  .legend--open .legend-body {
+    display: block;
+  }
+}
+
 .legend-heading {
   font-size: 13px;
   font-weight: 700;

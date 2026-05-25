@@ -193,6 +193,7 @@ export default function MapPage() {
   const [poisVisible, setPoisVisible] = useState(false)
   const [parkingVisible, setParkingVisible] = useState(true)
   const [titleCardVisible, setTitleCardVisible] = useState(true)
+  const [legendOpen, setLegendOpen] = useState(true)
 
   // Initialize map once
   useEffect(() => {
@@ -200,9 +201,10 @@ export default function MapPage() {
 
     const STADIA_KEY = import.meta.env.VITE_STADIA_KEY
 
+    const isMobile = window.innerWidth < 640
     const map = L.map(mapContainerRef.current, {
-      center: [29.9591, -90.0621],
-      zoom: 16,
+      center: isMobile ? [29.9558, -90.0630] : [29.9591, -90.0621],
+      zoom: isMobile ? 15 : 16,
       zoomControl: true,
     })
     mapRef.current = map
@@ -304,51 +306,60 @@ export default function MapPage() {
       )}
 
       {/* Legend */}
-      <div className="map-card legend">
-        <h2 className="legend-heading">February 19, 2027</h2>
-        <div className="legend-item">
-          <span className="legend-dot" style={{ background: '#7b4fa6' }} />
-          Welcome Party · Dat Dog Frenchmen
-        </div>
-        <div className="legend-item">
-          <span className="legend-dot" style={{ background: '#2e6fa8' }} />
-          Hotel Mazarin · Room Block
-        </div>
+      <div className={`map-card legend ${legendOpen ? 'legend--open' : 'legend--closed'}`}>
+        <button className="legend-mobile-toggle" onClick={() => setLegendOpen((v) => !v)}>
+          <span>Map Legend</span>
+          <span className="legend-chevron-wrap">
+            <span className="legend-chevron-label">{legendOpen ? 'collapse' : 'expand'}</span>
+            <span className="legend-chevron">{legendOpen ? '▾' : '▴'}</span>
+          </span>
+        </button>
+        <div className="legend-body">
+          <h2 className="legend-heading">February 19, 2027</h2>
+          <div className="legend-item">
+            <span className="legend-dot" style={{ background: '#7b4fa6' }} />
+            Welcome Party · Dat Dog Frenchmen
+          </div>
+          <div className="legend-item">
+            <span className="legend-dot" style={{ background: '#2e6fa8' }} />
+            Hotel Mazarin · Room Block
+          </div>
 
-        <hr className="legend-divider" />
-        <h2 className="legend-heading">February 20, 2027</h2>
+          <hr className="legend-divider" />
+          <h2 className="legend-heading">February 20, 2027</h2>
 
-        <div className="legend-item">
-          <span className="legend-dot" style={{ background: '#b5272b' }} />
-          Ceremony · St. Mary's Church
-        </div>
-        <div className="legend-item">
-          <span className="legend-dot" style={{ background: '#d4830a' }} />
-          Reception · Latrobe's on Royal
-        </div>
-        <div className="legend-item">
-          <span className="legend-dot" style={{ background: '#1a6e2e' }} />
-          Afterparty · Pat O'Brien's
-        </div>
+          <div className="legend-item">
+            <span className="legend-dot" style={{ background: '#b5272b' }} />
+            Ceremony · St. Mary's Church
+          </div>
+          <div className="legend-item">
+            <span className="legend-dot" style={{ background: '#d4830a' }} />
+            Reception · Latrobe's on Royal
+          </div>
+          <div className="legend-item">
+            <span className="legend-dot" style={{ background: '#1a6e2e' }} />
+            Afterparty · Pat O'Brien's
+          </div>
 
-        <hr className="legend-divider" />
-        <div className="legend-item">
-          <span className="legend-line" style={{ background: '#c86d1a' }} />
-          Walk from ceremony (~11 min)
-        </div>
-        <div className="legend-item">
-          <span className="legend-line-dashed" />
-          Second-line to Pat O's 🎺
-        </div>
+          <hr className="legend-divider" />
+          <div className="legend-item">
+            <span className="legend-line" style={{ background: '#c86d1a' }} />
+            Walk from ceremony (~11 min)
+          </div>
+          <div className="legend-item">
+            <span className="legend-line-dashed" />
+            Second-line to Pat O's 🎺
+          </div>
 
-        <hr className="legend-divider" />
-        <div className="legend-toggle" onClick={() => setPoisVisible((v) => !v)}>
-          <div className={`toggle-pill ${poisVisible ? 'toggle-pill--on' : 'toggle-pill--off'}`} />
-          Show points of interest
-        </div>
-        <div className="legend-toggle" onClick={() => setParkingVisible((v) => !v)}>
-          <div className={`toggle-pill ${parkingVisible ? 'toggle-pill--on' : 'toggle-pill--off'}`} />
-          Show parking recommendations
+          <hr className="legend-divider" />
+          <div className="legend-toggle" onClick={() => setPoisVisible((v) => !v)}>
+            <div className={`toggle-pill ${poisVisible ? 'toggle-pill--on' : 'toggle-pill--off'}`} />
+            Show points of interest
+          </div>
+          <div className="legend-toggle" onClick={() => setParkingVisible((v) => !v)}>
+            <div className={`toggle-pill ${parkingVisible ? 'toggle-pill--on' : 'toggle-pill--off'}`} />
+            Show parking recommendations
+          </div>
         </div>
       </div>
 
