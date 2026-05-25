@@ -227,7 +227,7 @@ a {
   color: var(--muted);
   transition: color 0.15s;
   text-decoration: none;
-  position: absolute;
+  position: fixed;
   top: 18px;
   left: 18px;
   z-index: 1100;
