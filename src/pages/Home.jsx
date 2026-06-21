@@ -43,16 +43,15 @@ export default function Home() {
           onLoad={() => setHeroLoaded(true)}
         />
         <div className="home-hero-fade" />
-      </div>
-
-      {/* Content */}
-      <div className="home-content">
         <header className="home-header">
           <p className="home-eyebrow">New Orleans · February 20, 2027</p>
           <h1 className="home-title">Sarah & Brandon</h1>
           <div className="home-divider" />
         </header>
+      </div>
 
+      {/* Content */}
+      <div className="home-content">
         <nav className="home-links">
           {LINKS.map((link) => {
             if (link.disabled) {
