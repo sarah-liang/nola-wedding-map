@@ -32,12 +32,12 @@ const VENUES = [
     body: 'Stately 1821 Greek Revival bank building designed by Benjamin Henry Latrobe, now a sought-after event venue with soaring ceilings and original brick vaults.<br><br><a href="https://maps.google.com/?q=Latrobes+on+Royal+403+Royal+St+New+Orleans+LA" target="_blank" rel="noopener" style="color:#d4830a;font-size:11px;text-decoration:none;">View on Google Maps →</a>',
   },
   {
-    lat: 29.9548204002082, lng: -90.06836251401374,
-    color: '#2e6fa8', pin: '🏢', label: 'Hotel Mazarin',
+    lat: 29.956227292817726, lng: -90.06565334920458,
+    color: '#2e6fa8', pin: '🏢', label: 'Omni Royal Orleans',
     emoji: '🏢',
-    title: 'Hotel Mazarin',
-    sub: 'Room Block · 730 Bienville St',
-    body: 'Our recommended hotel for out-of-town guests, just steps from the French Quarter. Ask about the room block when booking.<br><br><a href="https://maps.google.com/?q=Hotel+Mazarin+730+Bienville+St+New+Orleans+LA" target="_blank" rel="noopener" style="color:#2e6fa8;font-size:11px;text-decoration:none;">View on Google Maps →</a>',
+    title: 'Omni Royal Orleans',
+    sub: 'Room Block · 621 St Louis St',
+    body: 'Our recommended hotel for out-of-town guests, in the heart of the French Quarter. Ask about the room block when booking.<br><br><a href="https://maps.google.com/?q=Omni+Royal+Orleans+621+St+Louis+St+New+Orleans+LA" target="_blank" rel="noopener" style="color:#2e6fa8;font-size:11px;text-decoration:none;">View on Google Maps →</a>',
   },
   {
     lat: 29.95838661735729, lng: -90.06529732181706,
@@ -105,6 +105,8 @@ const PARKING = [
 
 // ── Icon helpers ──────────────────────────────────────────────────────────────
 
+const LABEL_ZOOM = 16
+
 function makePin(color, emoji, label, r = 22) {
   const w = Math.max(r * 2 + 4, label.length * 7 + 16)
   const h = r * 2 + 28
@@ -124,6 +126,22 @@ function makePin(color, emoji, label, r = 22) {
       <text x="${cx}" y="${cy + r * 0.38}" text-anchor="middle" font-size="${r * 0.9}" font-family="serif">${emoji}</text>
       <rect x="1" y="${cy + r + 4}" width="${w - 2}" height="17" rx="4" fill="rgba(255,250,242,0.93)" stroke="${color}" stroke-width="0.8"/>
       <text x="${cx}" y="${cy + r + 15.5}" text-anchor="middle" font-size="9.5" font-family="Georgia,serif" fill="${color}" font-weight="700" letter-spacing="0.02em">${label}</text>
+    </svg>`,
+  })
+}
+
+function makeCompactPin(color, emoji, r = 16) {
+  const w = r * 2 + 4, h = r * 2 + 6
+  const cx = w / 2, cy = r + 2
+  return L.divIcon({
+    className: '',
+    iconSize: [w, h],
+    iconAnchor: [w / 2, cy],
+    html: `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="${cx + 1}" cy="${cy * 2 - 1}" rx="${r * 0.6}" ry="${r * 0.15}" fill="rgba(0,0,0,0.13)"/>
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}" opacity="0.92"/>
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/>
+      <text x="${cx}" y="${cy + r * 0.38}" text-anchor="middle" font-size="${r * 0.9}" font-family="serif">${emoji}</text>
     </svg>`,
   })
 }
@@ -158,7 +176,7 @@ function makeParkingIcon(emoji) {
 
 function addRouteLabel(map, latlngs, text, borderColor, textColor, posOverride) {
   const mid = posOverride ?? latlngs[Math.floor(latlngs.length / 2)]
-  L.marker(mid, {
+  const marker = L.marker(mid, {
     icon: L.divIcon({
       className: '',
       iconSize: [0, 0],
@@ -178,7 +196,9 @@ function addRouteLabel(map, latlngs, text, borderColor, textColor, posOverride) 
     }),
     interactive: false,
     zIndexOffset: 50,
-  }).addTo(map)
+  })
+  marker.addTo(map)
+  return marker
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -186,13 +206,14 @@ function addRouteLabel(map, latlngs, text, borderColor, textColor, posOverride) 
 export default function MapPage() {
   const mapContainerRef = useRef(null)
   const mapRef = useRef(null)
+  const venueMarkersRef = useRef([])
+  const routeLabelMarkersRef = useRef([])
   const poiMarkersRef = useRef([])
   const parkingMarkersRef = useRef([])
 
   const [infoPanel, setInfoPanel] = useState(null)
   const [poisVisible, setPoisVisible] = useState(false)
   const [parkingVisible, setParkingVisible] = useState(true)
-  const [titleCardVisible, setTitleCardVisible] = useState(true)
   const [legendOpen, setLegendOpen] = useState(true)
 
   // Initialize map once
@@ -228,9 +249,20 @@ export default function MapPage() {
     ).addTo(map)
 
     // Venue markers
+    const compact = map.getZoom() < LABEL_ZOOM
     VENUES.forEach((v) => {
-      const marker = L.marker([v.lat, v.lng], { icon: makePin(v.color, v.pin, v.label) }).addTo(map)
+      const icon = compact ? makeCompactPin(v.color, v.pin) : makePin(v.color, v.pin, v.label)
+      const marker = L.marker([v.lat, v.lng], { icon }).addTo(map)
       marker.on('click', () => setInfoPanel({ emoji: v.emoji, title: v.title, sub: v.sub, body: v.body }))
+      venueMarkersRef.current.push({ marker, v })
+    })
+
+    map.on('zoomend', () => {
+      const isCompact = map.getZoom() < LABEL_ZOOM
+      venueMarkersRef.current.forEach(({ marker, v }) => {
+        marker.setIcon(isCompact ? makeCompactPin(v.color, v.pin) : makePin(v.color, v.pin, v.label))
+      })
+      routeLabelMarkersRef.current.forEach(m => isCompact ? m.remove() : m.addTo(map))
     })
 
     // POI markers (hidden initially)
@@ -254,18 +286,25 @@ export default function MapPage() {
         L.polyline(walkRoute, {
           color: '#c86d1a', weight: 3.5, opacity: 0.88, lineCap: 'round', lineJoin: 'round',
         }).addTo(map)
-        addRouteLabel(map, walkRoute, `~${walkMins ?? 11} min walk to reception`, '#c86d1a', '#7a4010', walkRoute[2])
+        const walkLabel = addRouteLabel(map, walkRoute, `~${walkMins ?? 11} min walk to reception`, '#c86d1a', '#7a4010', walkRoute[2])
 
         L.polyline(secondLineRoute, {
           color: '#2563a8', weight: 3.5, opacity: 0.85, dashArray: '9 6', lineCap: 'round',
         }).addTo(map)
-        addRouteLabel(map, secondLineRoute, '🎺 Second line!', '#2563a8', '#1a3e6e', [29.957019, -90.067071])
+        const secondLineLabel = addRouteLabel(map, secondLineRoute, '🎺 Second line!', '#2563a8', '#1a3e6e', [29.957019, -90.067071])
+
+        routeLabelMarkersRef.current = [walkLabel, secondLineLabel]
+        if (map.getZoom() < LABEL_ZOOM) {
+          routeLabelMarkersRef.current.forEach(m => m.remove())
+        }
       })
       .catch(() => console.warn('routes.json not found — run: node fetch-routes.mjs'))
 
     return () => {
       map.remove()
       mapRef.current = null
+      venueMarkersRef.current = []
+      routeLabelMarkersRef.current = []
       poiMarkersRef.current = []
       parkingMarkersRef.current = []
     }
@@ -292,18 +331,15 @@ export default function MapPage() {
       <div ref={mapContainerRef} className="map-div" />
 
       {/* Title card */}
-      {titleCardVisible && (
-        <div className="map-card title-card">
-          <div className="title-card-inner">
-            <div>
-              <div className="title-card-name">Sarah & Brandon's Wedding</div>
-              <div className="title-card-date">New Orleans · February 2027</div>
-              <Link to="/" className="title-card-home">← Back to our site</Link>
-            </div>
-            <button className="title-card-close" onClick={() => setTitleCardVisible(false)}>✕</button>
+      <div className="map-card title-card">
+        <div className="title-card-inner">
+          <div>
+            <div className="title-card-name">Sarah & Brandon's Wedding</div>
+            <div className="title-card-date">New Orleans · February 2027</div>
+            <Link to="/" className="title-card-home">← Back to our site</Link>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Legend */}
       <div className={`map-card legend ${legendOpen ? 'legend--open' : 'legend--closed'}`}>
@@ -322,7 +358,7 @@ export default function MapPage() {
           </div>
           <div className="legend-item">
             <span className="legend-dot" style={{ background: '#2e6fa8' }} />
-            Hotel Mazarin · Room Block
+            Omni Royal Orleans · Room Block
           </div>
 
           <hr className="legend-divider" />
