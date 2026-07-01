@@ -21,7 +21,7 @@ const VENUES = [
     emoji: '⛪',
     title: "St. Mary's Church",
     sub: 'Ceremony · Old Ursuline Museum',
-    body: 'The oldest surviving building in the Mississippi Valley — this 1752 French Colonial convent is a National Historic Landmark and the setting for our ceremony.<br><br><em style="color:#9a7c5e;">~11 min walk to reception →</em><br><br><a href="https://maps.google.com/?q=Old+Ursuline+Convent+1100+Chartres+St+New+Orleans+LA" target="_blank" rel="noopener" style="color:#b5272b;font-size:11px;text-decoration:none;">View on Google Maps →</a>',
+    body: 'The oldest surviving building in the Mississippi Valley — this 1752 French Colonial convent is a National Historic Landmark and the setting for our ceremony.<br><br><em style="color:#9a7c5e;">~13 min walk to reception →</em><br><br><a href="https://maps.google.com/?q=Old+Ursuline+Convent+1100+Chartres+St+New+Orleans+LA" target="_blank" rel="noopener" style="color:#b5272b;font-size:11px;text-decoration:none;">View on Google Maps →</a>',
   },
   {
     lat: 29.9559983642747, lng: -90.0667985462138,
@@ -46,6 +46,7 @@ const VENUES = [
     title: "Pat O'Brien's",
     sub: 'Afterparty · 718 St Peter St',
     body: "Legendary bar since 1933 and birthplace of the Hurricane cocktail, famous for dueling pianos, a lush courtyard, and a flaming fountain. We'll second-line straight here from Latrobe's!<br><br><a href=\"https://maps.google.com/?q=Pat+O'Briens+718+St+Peter+St+New+Orleans+LA\" target=\"_blank\" rel=\"noopener\" style=\"color:#1a6e2e;font-size:11px;text-decoration:none;\">View on Google Maps →</a>",
+    feature: 'afterparty',
   },
 ]
 
@@ -201,6 +202,12 @@ function addRouteLabel(map, latlngs, text, borderColor, textColor, posOverride) 
   return marker
 }
 
+const FEATURE_SECOND_LINE = import.meta.env.VITE_FEATURE_SECOND_LINE === 'true'
+const FEATURE_AFTERPARTY = import.meta.env.VITE_FEATURE_AFTERPARTY === 'true'
+
+const VENUE_FLAGS = { afterparty: FEATURE_AFTERPARTY }
+const ACTIVE_VENUES = VENUES.filter((v) => !v.feature || VENUE_FLAGS[v.feature])
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function MapPage() {
@@ -250,7 +257,7 @@ export default function MapPage() {
 
     // Venue markers
     const compact = map.getZoom() < LABEL_ZOOM
-    VENUES.forEach((v) => {
+    ACTIVE_VENUES.forEach((v) => {
       const icon = compact ? makeCompactPin(v.color, v.pin) : makePin(v.color, v.pin, v.label)
       const marker = L.marker([v.lat, v.lng], { icon }).addTo(map)
       marker.on('click', () => setInfoPanel({ emoji: v.emoji, title: v.title, sub: v.sub, body: v.body }))
@@ -286,14 +293,17 @@ export default function MapPage() {
         L.polyline(walkRoute, {
           color: '#c86d1a', weight: 3.5, opacity: 0.88, lineCap: 'round', lineJoin: 'round',
         }).addTo(map)
-        const walkLabel = addRouteLabel(map, walkRoute, `~${walkMins ?? 11} min walk to reception`, '#c86d1a', '#7a4010', walkRoute[2])
+        const walkLabel = addRouteLabel(map, walkRoute, `~${walkMins ?? 13} min walk to reception`, '#c86d1a', '#7a4010', walkRoute[2])
 
-        L.polyline(secondLineRoute, {
-          color: '#2563a8', weight: 3.5, opacity: 0.85, dashArray: '9 6', lineCap: 'round',
-        }).addTo(map)
-        const secondLineLabel = addRouteLabel(map, secondLineRoute, '🎺 Second line!', '#2563a8', '#1a3e6e', [29.957019, -90.067071])
-
-        routeLabelMarkersRef.current = [walkLabel, secondLineLabel]
+        if (FEATURE_SECOND_LINE) {
+          L.polyline(secondLineRoute, {
+            color: '#2563a8', weight: 3.5, opacity: 0.85, dashArray: '9 6', lineCap: 'round',
+          }).addTo(map)
+          const secondLineLabel = addRouteLabel(map, secondLineRoute, '🎺 Second line!', '#2563a8', '#1a3e6e', [29.957019, -90.067071])
+          routeLabelMarkersRef.current = [walkLabel, secondLineLabel]
+        } else {
+          routeLabelMarkersRef.current = [walkLabel]
+        }
         if (map.getZoom() < LABEL_ZOOM) {
           routeLabelMarkersRef.current.forEach(m => m.remove())
         }
@@ -372,20 +382,24 @@ export default function MapPage() {
             <span className="legend-dot" style={{ background: '#d4830a' }} />
             Reception · Latrobe's on Royal
           </div>
-          <div className="legend-item">
-            <span className="legend-dot" style={{ background: '#1a6e2e' }} />
-            Afterparty · Pat O'Brien's
-          </div>
+          {FEATURE_AFTERPARTY && (
+            <div className="legend-item">
+              <span className="legend-dot" style={{ background: '#1a6e2e' }} />
+              Afterparty · Pat O'Brien's
+            </div>
+          )}
 
           <hr className="legend-divider" />
           <div className="legend-item">
             <span className="legend-line" style={{ background: '#c86d1a' }} />
-            Walk from ceremony (~11 min)
+            Walk from ceremony (~13 min)
           </div>
-          <div className="legend-item">
-            <span className="legend-line-dashed" />
-            Second-line to Pat O's 🎺
-          </div>
+          {FEATURE_SECOND_LINE && (
+            <div className="legend-item">
+              <span className="legend-line-dashed" />
+              Second-line to Pat O's 🎺
+            </div>
+          )}
 
           <hr className="legend-divider" />
           <div className="legend-toggle" onClick={() => setPoisVisible((v) => !v)}>

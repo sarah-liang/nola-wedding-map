@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
-const LINKS = [
+const FEATURE_DRESS_CODE = import.meta.env.VITE_FEATURE_DRESS_CODE === 'true'
+const FEATURE_SECOND_LINE = import.meta.env.VITE_FEATURE_SECOND_LINE === 'true'
+
+const ALL_LINKS = [
   {
     icon: '🌹',
     title: 'Our Wedding Website',
@@ -20,6 +23,7 @@ const LINKS = [
     title: 'Dress Code',
     sub: 'What to wear to our wedding',
     to: '/dress-code',
+    feature: 'dressCode',
   },
   {
     icon: '✈️',
@@ -36,6 +40,9 @@ const LINKS = [
     external: true,
   },
 ]
+
+const FLAGS = { dressCode: FEATURE_DRESS_CODE }
+const LINKS = ALL_LINKS.filter((l) => !l.feature || FLAGS[l.feature])
 
 export default function Home() {
   const [heroLoaded, setHeroLoaded] = useState(false)
