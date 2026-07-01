@@ -22,10 +22,18 @@ const LINKS = [
     to: '/dress-code',
   },
   {
+    icon: '✈️',
+    title: 'Travel Information',
+    sub: 'Getting to New Orleans & getting around',
+    href: 'https://www.zola.com/wedding/liangbigus/travel',
+    external: true,
+  },
+  {
     icon: '🏨',
     title: 'Hotel Room Block',
-    sub: 'Coming soon',
-    disabled: true,
+    sub: 'Omni Royal Orleans · Reserve your room',
+    href: 'https://bookings.omnihotels.com/offer/new-orleans-royal-orleans/liang-bigus-wedding',
+    external: true,
   },
 ]
 
